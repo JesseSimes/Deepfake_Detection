@@ -1,0 +1,12 @@
+node_modules/
+dist/
+backend/static/
+__pycache__/
+*.pyc
+.venv/
+models/*
+!models/.gitkeep
+*.tsbuildinfo
+Dataset/
+venv/
+.venv-tf/

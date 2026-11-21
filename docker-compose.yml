@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Drop deepfake_detection_updated_v3.h5 into ./models
+      - ./models:/app/models:ro
+    environment:
+      - MODEL_PATH=/app/models/deepfake_detection_updated_v3.h5
+
+  # Retrain the model: docker compose --profile train run --rm train
+  # Needs the dataset loaded into the "dataset" volume first (see README).
+  train:
+    image: tensorflow/tensorflow:2.15.0-gpu
+    profiles: ["train"]
+    volumes:
+      - ./train:/train:ro
+      - ./models:/models
+      - dataset:/data:ro
+    environment:
+      - TF_CPP_MIN_LOG_LEVEL=2
+    command: python /train/train.py --data /data --out /models/deepfake_detection_retrained.h5
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  # Images live in a Docker volume because reading 190k small files straight
+  # from a Windows folder through Docker is very slow.
+  dataset:

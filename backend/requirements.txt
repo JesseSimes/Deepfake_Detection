@@ -1,0 +1,6 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+pillow==11.0.0
+# Same TensorFlow/Keras as the .venv-tf used to train models/deepfake_detection_updated_v3.h5
+tensorflow-cpu==2.21.0
