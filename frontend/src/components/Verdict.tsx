@@ -3,7 +3,7 @@ import type { Item } from "../App";
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
 
-export default function Verdict({ item }: { item: Item }) {
+export default function Verdict({ item, modelLoading }: { item: Item; modelLoading: boolean }) {
   const r = item.result;
   const tone = r ? (r.label === "fake" ? "fake" : "real") : item.status === "error" ? "error" : "pending";
   const lowConfidence = r && r.confidence < 0.65;
@@ -26,7 +26,8 @@ export default function Verdict({ item }: { item: Item }) {
         {item.status === "pending" && (
           <>
             <p className="eyebrow">Analysing</p>
-            <h2 className="verdict-label">Running the model…</h2>
+            <h2 className="verdict-label">{modelLoading ? "Loading the model…" : "Running the model…"}</h2>
+            {modelLoading && <p className="note">First visit only: the 13 MB model downloads once, then runs on this device.</p>}
           </>
         )}
 
@@ -41,7 +42,7 @@ export default function Verdict({ item }: { item: Item }) {
         {r && (
           <>
             <p className="eyebrow">
-              Verdict{r.mode === "demo" && <span className="tag">demo score</span>}
+              Verdict
             </p>
             <h2 className="verdict-label">{r.label === "fake" ? "Likely fake" : "Likely real"}</h2>
             <p className="confidence">

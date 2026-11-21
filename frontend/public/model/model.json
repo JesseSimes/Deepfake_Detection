@@ -1,0 +1,168 @@
+{
+  "format": "deepfake-cnn/1",
+  "source": "deepfake_detection_updated_v3.h5",
+  "input": {
+    "size": [
+      128,
+      128
+    ],
+    "channels": 3,
+    "scale": "0-255 RGB"
+  },
+  "output": "sigmoid = P(Real); classes sorted ['Fake', 'Real']",
+  "test_accuracy": 0.8727,
+  "weights_file": "weights.bin",
+  "weights_bytes": 13219076,
+  "layers": [
+    {
+      "name": "conv2d",
+      "type": "Conv2D",
+      "activation": "relu",
+      "weights": [
+        {
+          "shape": [
+            3,
+            3,
+            3,
+            32
+          ],
+          "offset": 0
+        },
+        {
+          "shape": [
+            32
+          ],
+          "offset": 864
+        }
+      ]
+    },
+    {
+      "name": "max_pooling2d",
+      "type": "MaxPooling2D",
+      "pool": [
+        2,
+        2
+      ],
+      "strides": [
+        2,
+        2
+      ]
+    },
+    {
+      "name": "conv2d_1",
+      "type": "Conv2D",
+      "activation": "relu",
+      "weights": [
+        {
+          "shape": [
+            3,
+            3,
+            32,
+            64
+          ],
+          "offset": 896
+        },
+        {
+          "shape": [
+            64
+          ],
+          "offset": 19328
+        }
+      ]
+    },
+    {
+      "name": "max_pooling2d_1",
+      "type": "MaxPooling2D",
+      "pool": [
+        2,
+        2
+      ],
+      "strides": [
+        2,
+        2
+      ]
+    },
+    {
+      "name": "conv2d_2",
+      "type": "Conv2D",
+      "activation": "relu",
+      "weights": [
+        {
+          "shape": [
+            3,
+            3,
+            64,
+            128
+          ],
+          "offset": 19392
+        },
+        {
+          "shape": [
+            128
+          ],
+          "offset": 93120
+        }
+      ]
+    },
+    {
+      "name": "max_pooling2d_2",
+      "type": "MaxPooling2D",
+      "pool": [
+        2,
+        2
+      ],
+      "strides": [
+        2,
+        2
+      ]
+    },
+    {
+      "name": "flatten",
+      "type": "Flatten"
+    },
+    {
+      "name": "dense",
+      "type": "Dense",
+      "activation": "relu",
+      "weights": [
+        {
+          "shape": [
+            25088,
+            128
+          ],
+          "offset": 93248
+        },
+        {
+          "shape": [
+            128
+          ],
+          "offset": 3304512
+        }
+      ]
+    },
+    {
+      "name": "dropout",
+      "type": "Dropout"
+    },
+    {
+      "name": "dense_1",
+      "type": "Dense",
+      "activation": "sigmoid",
+      "weights": [
+        {
+          "shape": [
+            128,
+            1
+          ],
+          "offset": 3304640
+        },
+        {
+          "shape": [
+            1
+          ],
+          "offset": 3304768
+        }
+      ]
+    }
+  ]
+}
