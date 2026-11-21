@@ -1,6 +1,8 @@
-import type { Health } from "../api";
+import type { ModelState } from "../model";
 
-export default function ModelInfo({ health }: { health: Health | null }) {
+export default function ModelInfo({ model }: { model: ModelState }) {
+  const meta = model.status === "ready" ? model.meta : null;
+  const size = meta?.input.size[0] ?? 128;
   return (
     <section className="panel">
       <div className="panel-head">
@@ -13,7 +15,9 @@ export default function ModelInfo({ health }: { health: Health | null }) {
         </div>
         <div>
           <dt>Input</dt>
-          <dd className="mono">{health?.input_size ?? 128}×{health?.input_size ?? 128} RGB</dd>
+          <dd className="mono">
+            {size}×{size} RGB
+          </dd>
         </div>
         <div>
           <dt>Training data</dt>
@@ -21,11 +25,13 @@ export default function ModelInfo({ health }: { health: Health | null }) {
         </div>
         <div>
           <dt>Test accuracy</dt>
-          <dd className="mono">87.27%</dd>
+          <dd className="mono">{meta ? `${(meta.test_accuracy * 100).toFixed(2)}%` : "—"}</dd>
         </div>
         <div>
-          <dt>Model file</dt>
-          <dd className="mono small">{health?.model_file ?? "—"}</dd>
+          <dt>Runs on</dt>
+          <dd className="mono small">
+            {model.status === "ready" ? `TensorFlow.js (${model.backend})` : "—"}
+          </dd>
         </div>
       </dl>
       <p className="muted small">

@@ -86,6 +86,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--warn-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
   border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px;
 }
+.inline-link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 500; text-decoration: underline; }
 .banner-error { background: var(--fake-soft); border-color: color-mix(in srgb, var(--fake) 40%, transparent); }
 
 /* Layout */

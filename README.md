@@ -14,58 +14,61 @@ THANK YOU!!
 
 ---
 
-## Web app (frontend + API)
+## Web app
 
-A browser UI for the trained model: drag, drop or paste images and get a real/fake verdict, the probability, and a history of the session.
-
-```
-backend/   FastAPI server: loads the .h5 model, exposes /api/health and /api/predict
-frontend/  React + Vite UI
-models/    put deepfake_detection_updated_v3.h5 here (git-ignored)
-```
-
-### Run locally with the training environment (quickest)
-
-`.venv-tf` already has TensorFlow 2.21, so it only needs the web server packages:
+A browser UI for the trained model: drag, drop or paste images and get a real/fake verdict, the probability, and a history of the session. **The model runs in the browser with TensorFlow.js**, so images never leave the visitor's device and the site deploys as static files (e.g. on Vercel).
 
 ```
-.venv-tf\Scripts\pip install fastapi==0.115.6 "uvicorn[standard]==0.32.1" python-multipart==0.0.20 pillow
-cd frontend; npm install; npm run build; cd ..
-$env:STATIC_DIR = "frontend/dist"
-.venv-tf\Scripts\python -m uvicorn backend.app:app --port 8000
+frontend/               React + Vite UI; src/model.ts runs the CNN with TensorFlow.js
+frontend/public/model/  exported weights (model.json + weights.bin, 13 MB)
+tools/export_weights.py converts a Keras .h5 into those files
+backend/                optional FastAPI server exposing the model as an HTTP API
+models/                 .h5 files (git-ignored)
 ```
 
-Then open http://localhost:8000.
-
-### Run with Docker (no local Python needed)
-
-1. Copy `deepfake_detection_updated_v3.h5` into `models/`.
-2. `docker compose up --build`
-3. Open http://localhost:8000
-
-If no model file is found the app starts in **demo mode**: it works end to end but the scores are placeholders, and the UI says so.
-
-### Run for development
+### Run locally
 
 ```
-# terminal 1: API (Python 3.9–3.11)
-pip install -r backend/requirements.txt
-uvicorn backend.app:app --reload --port 8000
-
-# terminal 2: UI with hot reload, proxies /api to :8000
-cd frontend && npm install && npm run dev
+cd frontend
+npm install
+npm run dev
 ```
 
-Then open http://localhost:5173.
+Open http://localhost:5173. The first visit downloads the 13 MB model once.
+
+### Deploy to Vercel
+
+`vercel.json` at the repo root builds `frontend/` and serves `frontend/dist`. Import the repository in Vercel and deploy; no environment variables or server are needed.
+
+### Updating the model
+
+After retraining, export the new weights and commit them:
+
+```
+.venv-tfScriptspython toolsexport_weights.py models<new_model>.h5 frontendpublicmodel <test_accuracy>
+```
+
+The browser runtime supports this notebook's architecture (Conv2D / MaxPooling2D / Flatten / Dropout / Dense). On 200 test images the browser and Keras gave the same verdict for all 200 (mean score difference 0.006, from JPEG decoding differences).
+
+### Optional: Python API
+
+`backend/app.py` serves the same model over HTTP (`/api/health`, `/api/predict`) for scripts or other apps. With the training environment:
+
+```
+.venv-tfScriptspip install fastapi==0.115.6 "uvicorn[standard]==0.32.1" python-multipart==0.0.20 pillow
+.venv-tfScriptspython -m uvicorn backend.app:app --port 8000
+```
+
+Or with Docker: put the model in `models/` and run `docker compose up --build`. Without a model file the API runs in a labelled demo mode with placeholder scores.
 
 ### Preprocessing note (fixes vs. Testing_v1.py)
 
-The API preprocesses images the way the notebook **trained** the model, which differs from `Testing_v1.py` in two ways:
+The app (browser and API) preprocesses images the way the notebook **trained** the model, which differs from `Testing_v1.py` in two ways:
 
 - **Pixel scale and colour order.** `image_dataset_from_directory` yields RGB pixels in the 0–255 range and the model has no Rescaling layer. `Testing_v1.py` fed BGR (OpenCV) pixels divided by 255.
 - **Label direction.** Keras assigns class indices alphabetically (`Fake`=0, `Real`=1), so the sigmoid output is P(Real). `Testing_v1.py` treated `> 0.5` as fake, which is inverted.
 
-Both can be overridden with env vars if a model was trained differently: `INPUT_SCALE=unit` (divide by 255) and `POSITIVE_CLASS=fake`. Other settings: `MODEL_PATH`, `MAX_UPLOAD_MB`, `CORS_ORIGINS`.
+For the API, both can be overridden with env vars if a model was trained differently: `INPUT_SCALE=unit` (divide by 255) and `POSITIVE_CLASS=fake`. Other settings: `MODEL_PATH`, `MAX_UPLOAD_MB`, `CORS_ORIGINS`.
 
 `backend/make_dummy_model.py` writes an untrained model with the same architecture, useful only for checking that the serving pipeline works.
 

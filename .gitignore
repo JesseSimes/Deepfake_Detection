@@ -10,3 +10,4 @@ models/*
 Dataset/
 venv/
 .venv-tf/
+frontend/public/_eval/

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getHealth, predict, type Health, type Prediction } from "./api";
+import { loadModel, predict, subscribe, type ModelState, type Prediction } from "./model";
 import Dropzone from "./components/Dropzone";
 import Verdict from "./components/Verdict";
 import History from "./components/History";
@@ -18,13 +18,16 @@ export type Item = {
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
 
 export default function App() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [healthError, setHealthError] = useState<string | null>(null);
+  const [model, setModel] = useState<ModelState>({ status: "loading", progress: 0 });
   const [items, setItems] = useState<Item[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    getHealth().then(setHealth).catch((e: Error) => setHealthError(e.message));
+    const unsubscribe = subscribe(setModel);
+    loadModel().catch(() => {
+      /* surfaced through the subscription */
+    });
+    return unsubscribe;
   }, []);
 
   const update = (id: string, patch: Partial<Item>) =>
@@ -42,7 +45,6 @@ export default function App() {
     }));
     setItems((prev) => [...fresh, ...prev]);
     setSelectedId(fresh[0].id);
-    // Sequential: the CPU model is quick, and this keeps the server load sane.
     for (let i = 0; i < images.length; i++) {
       try {
         const result = await predict(images[i]);
@@ -78,50 +80,43 @@ export default function App() {
           <span className="brand-mark" aria-hidden />
           <div>
             <h1>Deepfake Detector</h1>
-            <p>Image classifier · CNN trained on 140k real &amp; synthetic faces</p>
+            <p>Image classifier · runs in your browser · images never leave your device</p>
           </div>
         </div>
-        <StatusPill health={health} error={healthError} />
+        <StatusPill model={model} />
       </header>
 
-      {health?.mode === "demo" && (
-        <div className="banner" role="status">
-          <strong>Demo mode.</strong> No trained model is loaded, so results are placeholder
-          scores, not real predictions. Put <code>{health.model_file}</code> in the{" "}
-          <code>models/</code> folder and restart the server.
-        </div>
-      )}
-      {healthError && (
+      {model.status === "error" && (
         <div className="banner banner-error" role="alert">
-          <strong>Can’t reach the API.</strong> Start the backend on port 8000 ({healthError}).
+          <strong>The model couldn’t load.</strong> {model.message}.{" "}
+          <button className="inline-link" onClick={() => loadModel().catch(() => {})}>
+            Try again
+          </button>
         </div>
       )}
 
       <main className="layout">
         <section className="workspace">
-          {selected ? (
-            <Verdict item={selected} />
-          ) : (
-            <Dropzone onFiles={analyse} large />
-          )}
+          {selected ? <Verdict item={selected} modelLoading={model.status === "loading"} /> : <Dropzone onFiles={analyse} large />}
           {selected && <Dropzone onFiles={analyse} />}
         </section>
 
         <aside className="sidebar">
           <History items={items} selectedId={selectedId} onSelect={setSelectedId} onClear={clear} />
-          <ModelInfo health={health} />
+          <ModelInfo model={model} />
         </aside>
       </main>
     </div>
   );
 }
 
-function StatusPill({ health, error }: { health: Health | null; error: string | null }) {
-  if (error) return <span className="pill pill-error">API offline</span>;
-  if (!health) return <span className="pill">Connecting…</span>;
-  return health.mode === "model" ? (
-    <span className="pill pill-ok" title={health.model_file}>Model loaded</span>
-  ) : (
-    <span className="pill pill-warn" title={health.detail ?? ""}>Demo mode</span>
+function StatusPill({ model }: { model: ModelState }) {
+  if (model.status === "error") return <span className="pill pill-error">Model failed</span>;
+  if (model.status === "loading")
+    return <span className="pill">Loading model {Math.round(model.progress * 100)}%</span>;
+  return (
+    <span className="pill pill-ok" title={`TensorFlow.js · ${model.backend}`}>
+      Model ready
+    </span>
   );
 }
