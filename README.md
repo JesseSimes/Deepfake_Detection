@@ -38,7 +38,7 @@ Open http://localhost:5173. The first visit downloads the 13 MB model once.
 
 ### Deploy to Vercel
 
-`vercel.json` at the repo root builds `frontend/` and serves `frontend/dist`. Import the repository in Vercel and deploy; no environment variables or server are needed.
+In Vercel, import the repository and choose **Import single project** next to `frontend` (Root Directory `frontend`). `frontend/vercel.json` holds the build and caching settings; no environment variables or server are needed.
 
 ### Updating the model
 
